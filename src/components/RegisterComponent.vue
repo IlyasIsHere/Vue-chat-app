@@ -1,10 +1,3 @@
-<script>
-// export default {
-//   name: "RegisterView"
-// }
-
-</script>
-
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500">
     <div class="bg-white p-8 rounded-xl shadow-2xl w-96 transform transition-all hover:scale-105">
@@ -36,10 +29,54 @@
           <a href="#" @click="$emit('switch-to-login')" class="font-medium text-indigo-600 hover:text-indigo-500">Login</a>
         </p>
       </div>
+      <span v-if="firebaseError" class="text-red-500 text-center block mt-4 text-sm">{{ firebaseError }}</span>
     </div>
   </div>
 </template>
 
-<style scoped>
+<script>
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
 
+export default {
+  data() {
+    return {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firebaseError: ''
+    }
+  },
+  methods: {
+    async register() {
+      if (this.password !== this.confirmPassword) {
+        this.firebaseError = 'Passwords do not match'
+        return
+      }
+
+      try {
+        const auth = getAuth()
+        await createUserWithEmailAndPassword(auth, this.email, this.password)
+        this.$router.push('/');
+      } catch (error) {
+        this.firebaseError = this.getFirebaseError(error.code)
+      }
+    },
+    getFirebaseError(errorCode) {
+      switch (errorCode) {
+        case 'auth/email-already-in-use':
+          return 'This email is already registered. Please try logging in or use a different email.'
+        case 'auth/invalid-email':
+          return 'Invalid email address.'
+        case 'auth/weak-password':
+          return 'Password is too weak. Please use a stronger password.'
+        default:
+          return 'Registration failed. Please try again.'
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+/* The styling is already provided in the template using Tailwind classes */
 </style>
