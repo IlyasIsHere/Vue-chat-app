@@ -45,7 +45,7 @@
                 <div v-if="isProfileMenuOpen" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
                   <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Profile</a>
                   <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Settings</a>
-                  <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Sign out</a>
+                  <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" @click="logOut">Sign out</a>
                 </div>
               </transition>
             </div>
@@ -103,15 +103,44 @@
           <div class="mt-3 px-2 space-y-1">
             <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:text-white hover:bg-indigo-500">Your Profile</a>
             <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:text-white hover:bg-indigo-500">Settings</a>
-            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:text-white hover:bg-indigo-500">Sign out</a>
+            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:text-white hover:bg-indigo-500" @click="logOut">Sign out</a>
           </div>
         </div>
       </div>
     </transition>
   </nav>
+  <!-- Error popup -->
+  <div id="errorPopup" class="fixed inset-x-0 top-0 flex items-center justify-center px-4 py-6 pointer-events-none sm:p-6">
+    <div v-if="showErrorPopup" class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out" :class="{ 'opacity-100 translate-y-0': showErrorPopup, 'opacity-0 -translate-y-2': !showErrorPopup }" role="alert">
+      <div class="p-4">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-3 w-0 flex-1 pt-0.5">
+            <p class="text-sm font-medium text-gray-900">Error</p>
+            <p class="mt-1 text-sm text-gray-500">{{ errorMessage }}</p>
+          </div>
+          <div class="ml-4 flex-shrink-0 flex">
+            <button @click="closeErrorPopup" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+              <span class="sr-only">Close</span>
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
+import { auth } from '../firebase/firebase.js';
+import { signOut } from "firebase/auth";
+
 export default {
   data() {
     return {
@@ -123,7 +152,9 @@ export default {
         { name: 'Reports', href: '#', current: false },
       ],
       isProfileMenuOpen: false,
-      isMobileMenuOpen: false
+      isMobileMenuOpen: false,
+      showErrorPopup: false,
+      errorMessage: ''
     }
   },
   methods: {
@@ -132,6 +163,18 @@ export default {
     },
     toggleMobileMenu() {
       this.isMobileMenuOpen = !this.isMobileMenuOpen
+    },
+    logOut() {
+      signOut(auth).then(() => {
+        this.$router.push('/auth');
+      }).catch((error) => {
+        this.errorMessage = 'An error occurred while signing out. Please try again.';
+        this.showErrorPopup = true;
+      });
+    },
+    closeErrorPopup() {
+      this.showErrorPopup = false;
+      this.errorMessage = '';
     }
   }
 }

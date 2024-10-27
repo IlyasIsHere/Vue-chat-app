@@ -4,6 +4,11 @@
       <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">Register</h2>
       <form @submit.prevent="register">
         <div class="mb-4">
+          <label for="displayName" class="block text-sm font-medium text-gray-700">Display Name</label>
+          <input v-model="displayName" type="text" id="displayName" required
+                 class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div class="mb-4">
           <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
           <input v-model="email" type="email" id="email" required
                  class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
@@ -35,11 +40,12 @@
 </template>
 
 <script>
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
 
 export default {
   data() {
     return {
+      displayName: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -55,7 +61,10 @@ export default {
 
       try {
         const auth = getAuth()
-        await createUserWithEmailAndPassword(auth, this.email, this.password)
+        const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password)
+        await updateProfile(userCredential.user, {
+          displayName: this.displayName
+        })
         this.$router.push('/');
       } catch (error) {
         this.firebaseError = this.getFirebaseError(error.code)

@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 import MessageItem from './MessageItem.vue';
 import { auth } from '../firebase/firebase.js';
 
@@ -31,6 +31,14 @@ const props = defineProps({
 const messagesContainer = ref(null);
 const currentUserId = ref(null);
 
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  });
+};
+
 onMounted(() => {
   scrollToBottom();
   currentUserId.value = auth.currentUser?.uid;
@@ -38,13 +46,6 @@ onMounted(() => {
 
 watch(() => props.messages.length, scrollToBottom);
 
-const scrollToBottom = () => {
-  setTimeout(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
-  }, 0);
-};
 </script>
 
 <style scoped>

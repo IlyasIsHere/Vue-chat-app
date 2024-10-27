@@ -71,5 +71,4 @@ export default {
 </script>
 
 <style scoped>
-/* The styling is already provided in the template using Tailwind classes */
 </style>
