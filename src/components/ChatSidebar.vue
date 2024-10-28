@@ -13,7 +13,7 @@
           <img v-if="user.photoURL" :src="user.photoURL" alt="User avatar" class="w-full h-full rounded-full object-cover">
         </div>
         <div class="flex-1">
-          <h3 class="text-white font-medium">{{ user.displayName }}</h3>
+          <h3 class="text-white font-medium">{{ user.username }}</h3>
           <p class="text-gray-400 text-sm">
             {{ user.online ? 'Online' : 'Offline' }}
           </p>

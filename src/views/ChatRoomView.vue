@@ -1,6 +1,6 @@
 <template>
-  <div v-if="currentUser" class="h-screen flex flex-col">
-    <main class="flex-1 overflow-hidden">
+  <div v-if="currentUser" class="h-[calc(100vh-64px)]"> <!-- Subtract navbar height (64px) -->
+    <main class="h-full">
       <ChatInterface />
     </main>
   </div>
@@ -35,3 +35,4 @@ export default {
   }
 };
 </script>
+

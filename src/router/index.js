@@ -7,8 +7,14 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/chatRoom',
-      name: 'chatRoom',
+      path: '/chatroom',
+      name: 'chatroom',
+      component: ChatRoom,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/',
+      name: 'home',
       component: ChatRoom,
       meta: { requiresAuth: true }
     },
@@ -35,17 +41,17 @@ router.beforeEach((to, from, next) => {
         next({ name: 'auth' }) // Redirect to auth if not authenticated
       }
     })
-  } else {
-    next() // Proceed to the route if no authentication is required
-  }
-  if (to.meta.requiresNonAuth) {
+  } else if (to.meta.requiresNonAuth) {
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         next()
       } else {
-        next({ name: 'chatRoom' })
+        next({ name: 'chatroom' })
       }
     })
+  }
+  else {
+    next() // Proceed to the route if no authentication is required
   }
 })
 

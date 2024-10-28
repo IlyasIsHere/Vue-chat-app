@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800">
     <div class="bg-white p-8 rounded-xl shadow-2xl w-96 transform transition-all hover:scale-105">
       <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">Login</h2>
       <form @submit.prevent="login">
         <div class="mb-4">
-          <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-          <input v-model="email" type="email" id="email" required
+          <label for="emailOrUsername" class="block text-sm font-medium text-gray-700">Email or Username</label>
+          <input v-model="emailOrUsername" type="text" id="emailOrUsername" required
                  class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
         </div>
         <div class="mb-6">
@@ -31,11 +31,12 @@
 
 <script>
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore'
 
 export default {
   data() {
     return {
-      email: '',
+      emailOrUsername: '',
       password: '',
       firebaseError: ''
     }
@@ -44,7 +45,24 @@ export default {
     async login() {
       try {
         const auth = getAuth();
-        await signInWithEmailAndPassword(auth, this.email, this.password);
+        let email = this.emailOrUsername;
+
+        // Check if input is username instead of email
+        if (!this.emailOrUsername.includes('@')) {
+          const db = getFirestore();
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('username', '==', this.emailOrUsername));
+          const querySnapshot = await getDocs(q);
+          
+          if (querySnapshot.empty) {
+            this.firebaseError = 'User not found';
+            return;
+          }
+          
+          email = querySnapshot.docs[0].data().email;
+        }
+
+        await signInWithEmailAndPassword(auth, email, this.password);
         this.$router.push('/');
       } catch (error) {
         this.firebaseError = this.getFirebaseError(error.code)
@@ -57,11 +75,11 @@ export default {
         case 'auth/user-disabled':
           return 'This account has been disabled.'
         case 'auth/user-not-found':
-          return 'User not found. Please check your email or register.'
+          return 'User not found. Please check your email/username or register.'
         case 'auth/wrong-password':
           return 'Incorrect password. Please try again.'
         case 'auth/invalid-credential':
-          return 'Incorrect email or password. Please try again.'
+          return 'Incorrect email/username or password. Please try again.'
         default:
           return 'Login failed. Please try again.'
       }

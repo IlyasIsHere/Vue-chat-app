@@ -1,5 +1,5 @@
 <template>
-  <nav class="bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg" v-if="authInitialized">
+  <nav class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-lg" v-if="authInitialized">
     <div class="mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center">
@@ -20,7 +20,7 @@
         <div class="hidden md:block" v-if="isAuthenticated">
           <div class="ml-4 flex items-center md:ml-6">
             <div class="text-indigo-100 mr-4">
-              Logged in as: <strong>{{ userDisplayName }}</strong>
+              Logged in as: <strong>{{ username }}</strong>
             </div>
             <button class="bg-indigo-700 p-1 rounded-full text-indigo-100 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white">
               <span class="sr-only">View notifications</span>
@@ -34,7 +34,7 @@
               <div>
                 <button @click="toggleProfileMenu" class="max-w-xs bg-indigo-600 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white" id="user-menu" aria-haspopup="true">
                   <span class="sr-only">Open user menu</span>
-                  <img class="h-8 w-8 rounded-full" src="../assets/placeholder.svg?height=32&width=32" alt="User avatar">
+                  <img class="h-8 w-8 rounded-full" :src="profilePicture" alt="User avatar">
                 </button>
               </div>
               <transition
@@ -90,10 +90,10 @@
         <div class="pt-4 pb-3 border-t border-indigo-700">
           <div class="flex items-center px-5">
             <div class="flex-shrink-0">
-              <img class="h-10 w-10 rounded-full" src="../assets/placeholder.svg?height=40&width=40" alt="User avatar">
+              <img class="h-10 w-10 rounded-full" :src="profilePicture" alt="User avatar">
             </div>
             <div class="ml-3">
-              <div class="text-base font-medium leading-none text-white">{{ userDisplayName }}</div>
+              <div class="text-base font-medium leading-none text-white">{{ username }}</div>
             </div>
             <button class="ml-auto bg-indigo-600 flex-shrink-0 p-1 rounded-full text-indigo-100 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white">
               <span class="sr-only">View notifications</span>
@@ -142,6 +142,8 @@
 <script>
 import { auth } from '../firebase/firebase.js';
 import { signOut, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
 
 export default {
   data() {
@@ -149,9 +151,6 @@ export default {
       navigation: [
         { name: 'Login/Register', href: '/auth', current: false },
         { name: 'Chatroom', href: '/chatroom', current: false },
-        { name: 'Projects', href: '#', current: false },
-        { name: 'Calendar', href: '#', current: false },
-        { name: 'Reports', href: '#', current: false },
       ],
       isProfileMenuOpen: false,
       isMobileMenuOpen: false,
@@ -159,7 +158,8 @@ export default {
       errorMessage: '',
       isAuthenticated: false,
       authInitialized: false,
-      userDisplayName: ''
+      username: '',
+      profilePicture: '../assets/placeholder.svg?height=32&width=32'
     }
   },
   computed: {
@@ -176,11 +176,23 @@ export default {
     }
   },
   created() {
-    onAuthStateChanged(auth, (user) => {
+    const db = getFirestore();
+    const storage = getStorage();
+    onAuthStateChanged(auth, async (user) => {
       this.isAuthenticated = !!user;
       this.authInitialized = true;
       if (user) {
-        this.userDisplayName = user.displayName || user.email;
+        // Get user data from Firestore
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          this.username = userData.username;
+          if (userData.photoURL) {
+            this.profilePicture = userData.photoURL;
+          } else {
+            this.profilePicture = '../assets/placeholder.svg?height=32&width=32';
+          }
+        }
       }
     });
   },
