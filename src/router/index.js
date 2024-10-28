@@ -16,6 +16,7 @@ const router = createRouter({
       path: '/auth',
       name: 'auth',
       component: AuthView,
+      meta: { requiresNonAuth: true }
     },
   ]
 })
@@ -36,6 +37,15 @@ router.beforeEach((to, from, next) => {
     })
   } else {
     next() // Proceed to the route if no authentication is required
+  }
+  if (to.meta.requiresNonAuth) {
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        next()
+      } else {
+        next({ name: 'chatRoom' })
+      }
+    })
   }
 })
 

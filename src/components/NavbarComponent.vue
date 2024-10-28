@@ -1,6 +1,6 @@
 <template>
-  <nav class="bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <nav class="bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg" v-if="authInitialized">
+    <div class="mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center">
           <div class="flex-shrink-0">
@@ -8,7 +8,7 @@
           </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
-              <a v-for="item in navigation" :key="item.name" :href="item.href"
+              <a v-for="item in filteredNavigation" :key="item.name" :href="item.href"
                  :class="[item.current ? 'bg-indigo-700 text-white' : 'text-indigo-100 hover:bg-indigo-500 hover:text-white',
                           'px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out']"
                  :aria-current="item.current ? 'page' : undefined">
@@ -17,8 +17,11 @@
             </div>
           </div>
         </div>
-        <div class="hidden md:block">
+        <div class="hidden md:block" v-if="isAuthenticated">
           <div class="ml-4 flex items-center md:ml-6">
+            <div class="text-indigo-100 mr-4">
+              Logged in as: <strong>{{ userDisplayName }}</strong>
+            </div>
             <button class="bg-indigo-700 p-1 rounded-full text-indigo-100 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white">
               <span class="sr-only">View notifications</span>
               <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -51,7 +54,7 @@
             </div>
           </div>
         </div>
-        <div class="-mr-2 flex md:hidden">
+        <div class="-mr-2 flex md:hidden" v-if="isAuthenticated">
           <!-- Mobile menu button -->
           <button @click="toggleMobileMenu" class="bg-indigo-600 inline-flex items-center justify-center p-2 rounded-md text-indigo-100 hover:text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white">
             <span class="sr-only">Open main menu</span>
@@ -77,7 +80,7 @@
     >
       <div v-if="isMobileMenuOpen" class="md:hidden">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          <a v-for="item in navigation" :key="item.name" :href="item.href"
+          <a v-for="item in filteredNavigation" :key="item.name" :href="item.href"
              :class="[item.current ? 'bg-indigo-700 text-white' : 'text-indigo-100 hover:bg-indigo-500 hover:text-white',
                       'block px-3 py-2 rounded-md text-base font-medium']"
              :aria-current="item.current ? 'page' : undefined">
@@ -90,8 +93,7 @@
               <img class="h-10 w-10 rounded-full" src="../assets/placeholder.svg?height=40&width=40" alt="User avatar">
             </div>
             <div class="ml-3">
-              <div class="text-base font-medium leading-none text-white">Tom Cook</div>
-              <div class="text-sm font-medium leading-none text-indigo-200">tom@example.com</div>
+              <div class="text-base font-medium leading-none text-white">{{ userDisplayName }}</div>
             </div>
             <button class="ml-auto bg-indigo-600 flex-shrink-0 p-1 rounded-full text-indigo-100 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white">
               <span class="sr-only">View notifications</span>
@@ -139,14 +141,14 @@
 
 <script>
 import { auth } from '../firebase/firebase.js';
-import { signOut } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 
 export default {
   data() {
     return {
       navigation: [
-        { name: 'Login/Register', href: '/auth', current: true },
-        { name: 'Team', href: '#', current: false },
+        { name: 'Login/Register', href: '/auth', current: false },
+        { name: 'Chatroom', href: '/chatroom', current: false },
         { name: 'Projects', href: '#', current: false },
         { name: 'Calendar', href: '#', current: false },
         { name: 'Reports', href: '#', current: false },
@@ -154,8 +156,33 @@ export default {
       isProfileMenuOpen: false,
       isMobileMenuOpen: false,
       showErrorPopup: false,
-      errorMessage: ''
+      errorMessage: '',
+      isAuthenticated: false,
+      authInitialized: false,
+      userDisplayName: ''
     }
+  },
+  computed: {
+    filteredNavigation() {
+      return this.navigation.filter(item => {
+        if (item.name === 'Login/Register') {
+          return !this.isAuthenticated;
+        }
+        return true;
+      }).map(item => ({
+        ...item,
+        current: item.href === this.$route.path
+      }));
+    }
+  },
+  created() {
+    onAuthStateChanged(auth, (user) => {
+      this.isAuthenticated = !!user;
+      this.authInitialized = true;
+      if (user) {
+        this.userDisplayName = user.displayName || user.email;
+      }
+    });
   },
   methods: {
     toggleProfileMenu() {
