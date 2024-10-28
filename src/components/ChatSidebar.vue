@@ -15,7 +15,7 @@
         <div class="flex-1">
           <h3 class="text-white font-medium">{{ user.username }}</h3>
           <p class="text-gray-400 text-sm">
-            {{ user.online ? 'Online' : 'Offline' }}
+            {{ user.online ? 'Online' : formatLastSeen(user.lastSeen) }}
           </p>
         </div>
         <div 
@@ -28,7 +28,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { defineProps } from 'vue';
+
+const props = defineProps({
   users: {
     type: Array,
     required: true
@@ -40,4 +42,19 @@ defineProps({
 });
 
 defineEmits(['select-user']);
+
+const formatLastSeen = (timestamp) => {
+  if (!timestamp) return 'Never online';
+  
+  const lastSeen = timestamp.toDate();
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - lastSeen) / 1000);
+  
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  
+  return lastSeen.toLocaleDateString();
+};
 </script>

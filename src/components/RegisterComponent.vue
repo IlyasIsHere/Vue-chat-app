@@ -24,10 +24,16 @@
                  class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
         </div>
         <div class="mb-6">
-          <label for="profilePicture" class="block text-sm font-medium text-gray-700">Profile Picture</label>
-          <input type="file" id="profilePicture" @change="handleImageUpload" accept="image/*"
-                 class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-          <img v-if="imagePreview" :src="imagePreview" class="mt-2 w-20 h-20 object-cover rounded-full mx-auto">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+          <div class="flex items-center space-x-4">
+            <div class="w-20 h-20 rounded-full bg-gray-200 overflow-hidden">
+              <img v-if="imagePreview" :src="imagePreview" alt="Profile preview" class="w-full h-full object-cover">
+            </div>
+            <label class="cursor-pointer bg-indigo-50 px-4 py-2 rounded-md hover:bg-indigo-100 transition-colors">
+              <span class="text-indigo-600 text-sm">Choose file</span>
+              <input type="file" class="hidden" accept="image/*" @change="handleImageUpload">
+            </label>
+          </div>
         </div>
         <button type="submit"
                 class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300">
@@ -46,9 +52,9 @@
 </template>
 
 <script>
-import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
-import { doc, setDoc, query, collection, where, getDocs, getFirestore, updateDoc } from 'firebase/firestore'
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default {
   data() {
@@ -57,33 +63,10 @@ export default {
       email: '',
       password: '',
       confirmPassword: '',
-      firebaseError: '',
       selectedImage: null,
-      imagePreview: null
+      imagePreview: null,
+      firebaseError: ''
     }
-  },
-  created() {
-    const auth = getAuth();
-    // Set up auth state listener
-    onAuthStateChanged(auth, async (user) => {
-      const db = getFirestore();
-      if (user) {
-        // User is signed in
-        await updateDoc(doc(db, 'users', user.uid), {
-          online: true,
-          lastSeen: new Date()
-        });
-      } else {
-        // User is signed out - update last user's status if we have their ID
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          await updateDoc(doc(db, 'users', currentUser.uid), {
-            online: false,
-            lastSeen: new Date()
-          });
-        }
-      }
-    });
   },
   methods: {
     handleImageUpload(event) {
@@ -123,23 +106,21 @@ export default {
 
       try {
         const auth = getAuth()
-        const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password)
+        const { user } = await createUserWithEmailAndPassword(auth, this.email, this.password)
         
         // Upload profile picture if selected
-        const photoURL = await this.uploadProfilePicture(userCredential.user.uid)
-
-        // Add user to Firestore
+        const photoURL = await this.uploadProfilePicture(user.uid)
+        
+        // Create user document in Firestore
         const db = getFirestore()
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
+        await setDoc(doc(db, 'users', user.uid), {
           username: this.username,
           email: this.email,
-          createdAt: new Date(),
-          online: true,
-          lastSeen: new Date(),
-          photoURL: photoURL
+          photoURL: photoURL,
+          lastSeen: new Date()
         })
 
-        this.$router.push('/');
+        this.$router.push('/')
       } catch (error) {
         this.firebaseError = this.getFirebaseError(error.code)
       }

@@ -4,6 +4,7 @@
       <input
         v-model="inputMessage"
         @keyup.enter="sendMessage"
+        @input="handleTyping"
         type="text"
         placeholder="Type a message..."
         class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -23,12 +24,33 @@ import { ref } from 'vue'
 import { SendIcon } from 'lucide-vue-next'
 
 const inputMessage = ref('')
-const emit = defineEmits(['send-message'])
+const emit = defineEmits(['send-message', 'typing'])
+let typingTimeout = null
+
+const handleTyping = () => {
+  emit('typing')
+  
+  // Clear existing timeout
+  if (typingTimeout) {
+    clearTimeout(typingTimeout)
+  }
+  
+  // Set new timeout
+  typingTimeout = setTimeout(() => {
+    typingTimeout = null
+  }, 3000)
+}
 
 const sendMessage = () => {
   if (inputMessage.value.trim()) {
     emit('send-message', inputMessage.value)
     inputMessage.value = ''
+    
+    // Clear typing timeout when message is sent
+    if (typingTimeout) {
+      clearTimeout(typingTimeout)
+      typingTimeout = null
+    }
   }
 }
 </script>

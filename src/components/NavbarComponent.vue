@@ -54,7 +54,7 @@
             </div>
           </div>
         </div>
-        <div class="-mr-2 flex md:hidden" v-if="isAuthenticated">
+        <div class="-mr-2 flex md:hidden">
           <!-- Mobile menu button -->
           <button @click="toggleMobileMenu" class="bg-indigo-600 inline-flex items-center justify-center p-2 rounded-md text-indigo-100 hover:text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white">
             <span class="sr-only">Open main menu</span>
@@ -87,7 +87,7 @@
             {{ item.name }}
           </a>
         </div>
-        <div class="pt-4 pb-3 border-t border-indigo-700">
+        <div class="pt-4 pb-3 border-t border-indigo-700" v-if="isAuthenticated">
           <div class="flex items-center px-5">
             <div class="flex-shrink-0">
               <img class="h-10 w-10 rounded-full" :src="profilePicture" alt="User avatar">
