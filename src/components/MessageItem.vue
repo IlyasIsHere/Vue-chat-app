@@ -3,7 +3,7 @@
     'max-w-xs rounded-lg p-3 mb-2',
     isSent ? 'bg-blue-500 text-white ml-auto' : 'bg-gray-200 text-gray-800'
   ]">
-    {{ message.text }}
+    <div class="break-words">{{ message.text }}</div>
     <div class="text-xs mt-1 flex justify-between items-center">
       <span>{{ formatTime(message.timestamp) }}</span>
     </div>
